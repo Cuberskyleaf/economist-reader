@@ -1,0 +1,15 @@
+﻿# Data files (copyrighted)
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

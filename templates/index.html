@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>经济学人阅读器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: #f5f0eb; color: #2c2c2c; min-height: 100vh; }
+.container { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+header { text-align: center; padding: 40px 0 30px; border-bottom: 2px solid #c41230; margin-bottom: 30px; }
+header h1 { font-size: 2.2em; color: #c41230; letter-spacing: 2px; }
+header p { color: #666; margin-top: 8px; font-size: 1.05em; }
+.actions { display: flex; gap: 12px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
+.btn { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600; transition: all .2s; text-decoration: none; display: inline-block; }
+.btn-primary { background: #c41230; color: #fff; }
+.btn-primary:hover { background: #a00e27; }
+.btn-secondary { background: #fff; color: #c41230; border: 2px solid #c41230; }
+.btn-secondary:hover { background: #fef0f0; }
+.issue-card { background: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); display: flex; justify-content: space-between; align-items: center; transition: transform .15s; }
+.issue-card:hover { transform: translateX(4px); box-shadow: 0 4px 14px rgba(0,0,0,.1); }
+.issue-date { font-weight: 700; font-size: 1.15em; color: #1a1a1a; }
+.issue-count { color: #888; font-size: 0.9em; }
+.issue-arrow { color: #c41230; font-size: 1.2em; }
+.empty-state { text-align: center; padding: 60px; color: #999; }
+.empty-state .icon { font-size: 4em; margin-bottom: 20px; }
+.empty-state p { font-size: 1.1em; margin-bottom: 20px; }
+footer { text-align: center; padding: 40px; color: #aaa; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>The Economist</h1>
+<p>经济学人 · 每周阅读</p>
+</header>
+<div class="actions">
+<a href="/download" class="btn btn-primary">⬇ 下载最新期刊</a>
+<a href="/extract" class="btn btn-secondary">📄 提取文章</a>
+</div>
+{% if issues %}
+{% for issue in issues %}
+<a href="/issue/{{ issue.id }}" style="text-decoration:none;color:inherit;">
+<div class="issue-card">
+<div>
+<div class="issue-date">📰 {{ issue.display_date }}</div>
+<div class="issue-count">{{ issue.article_count }} 篇文章</div>
+</div>
+<div class="issue-arrow">→</div>
+</div>
+</a>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+<div class="icon">📭</div>
+<p>还没有下载任何期刊</p>
+<p>点击「下载最新期刊」开始阅读</p>
+</div>
+{% endif %}
+</div>
+<footer>数据来源: github.com/hehonghui/awesome-english-ebooks</footer>
+</body>
+</html>

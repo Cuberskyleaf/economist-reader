@@ -1,0 +1,10 @@
+{
+  "github_repo": "hehonghui/awesome-english-ebooks",
+  "github_path": "01_economist",
+  "data_dir": "data",
+  "issues_dir": "data/issues",
+  "extracted_dir": "data/extracted",
+  "download_format": "epub",
+  "server_host": "127.0.0.1",
+  "server_port": 8080
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ issue.display_date }} - 经济学人</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Segoe UI", "Microsoft YaHei", "Georgia", serif; background: #f5f0eb; color: #2c2c2c; }
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+.top-bar { display: flex; align-items: center; gap: 15px; padding: 15px 0; border-bottom: 2px solid #c41230; margin-bottom: 20px; }
+.top-bar a { color: #c41230; text-decoration: none; font-weight: 600; }
+.top-bar a:hover { text-decoration: underline; }
+.top-bar .divider { color: #ccc; }
+.top-bar .issue-label { color: #888; font-size: 0.9em; }
+.sidebar { width: 260px; background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; flex-shrink: 0; }
+.sidebar h3 { font-size: 0.95em; color: #c41230; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+.article-link { display: block; padding: 10px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; color: #333; font-size: 0.9em; line-height: 1.4; transition: background .15s; margin-bottom: 2px; word-break: break-word; }
+.article-link:hover { background: #fef0f0; }
+.article-link.active { background: #c41230; color: #fff; font-weight: 600; }
+.article-link .wc { color: #aaa; font-size: 0.8em; }
+.article-link.active .wc { color: rgba(255,255,255,.7); }
+.main-layout { display: flex; gap: 24px; align-items: flex-start; }
+.content-area { flex: 1; min-width: 0; }
+.article-view { background: #fff; border-radius: 12px; padding: 30px 36px; box-shadow: 0 2px 8px rgba(0,0,0,.06); min-height: 60vh; }
+.article-view h2 { font-size: 1.6em; line-height: 1.4; color: #1a1a1a; margin-bottom: 12px; }
+.article-view .meta { color: #888; font-size: 0.9em; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+.article-view .text { font-size: 1.1em; line-height: 1.9; color: #333; word-wrap: break-word; overflow-wrap: break-word; }
+.article-view .text p { margin-bottom: 1em; }
+.word-clickable { cursor: pointer; transition: color .15s; border-bottom: 1px dotted transparent; }
+.word-clickable:hover { color: #c41230; border-bottom-color: #c41230; }
+.dict-popup { position: fixed; background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.18); padding: 20px 24px; z-index: 1000; max-width: 360px; font-size: 0.95em; line-height: 1.6; display: none; }
+.dict-popup .word { font-size: 1.2em; font-weight: 700; color: #c41230; margin-bottom: 8px; }
+.dict-popup .phonetic { color: #888; margin-bottom: 10px; }
+.dict-popup .cn-trans { color: #c41230; font-weight: 600; }
+.dict-popup .meaning { margin-top: 6px; }
+.dict-popup .meaning .pos { color: #c41230; font-style: italic; margin-top: 8px; }
+.dict-popup .definition { color: #333; padding-left: 8px; }
+.dict-popup .loading { color: #999; text-align: center; padding: 20px; }
+.placeholder { text-align: center; padding: 80px 40px; color: #ccc; }
+.placeholder .icon { font-size: 5em; margin-bottom: 16px; }
+@media (max-width: 700px) {
+.main-layout { flex-direction: column; }
+.sidebar { position: static; width: 100%; max-height: none; margin-bottom: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="top-bar">
+<a href="/">← 返回目录</a>
+<span class="divider">|</span>
+<span class="issue-label">{{ issue.display_date }} · {{ issue.article_count }} 篇文章</span>
+</div>
+<div class="main-layout">
+<aside class="sidebar">
+<h3>📑 文章目录</h3>
+{% for a in articles %}
+<a class="article-link {% if a.id == active_id %}active{% endif %}" href="/issue/{{ issue.id }}?article={{ loop.index0 }}">
+{{ a.title }}
+<span class="wc">({{ a.word_count }}词)</span>
+</a>
+{% endfor %}
+</aside>
+<main class="content-area">
+{% if current %}
+<div class="article-view">
+<h2>{{ current.title }}</h2>
+<div class="meta">约 {{ current.word_count }} 词</div>
+<div class="text" id="article-text">
+{% for paragraph in current.paragraphs %}
+<p>{% for word in paragraph %}<span class="word-clickable" data-word="{{ word|e }}">{{ word }}</span> {% endfor %}</p>
+{% endfor %}
+</div>
+</div>
+{% else %}
+<div class="article-view placeholder">
+<div class="icon">📖</div>
+<p>从左侧目录选择一篇文章开始阅读</p>
+</div>
+{% endif %}
+</main>
+</div>
+<div class="dict-popup" id="dict-popup">
+<div class="word" id="popup-word"></div>
+<div class="phonetic" id="popup-phonetic"></div>
+<div class="cn-trans" id="popup-cn"></div>
+<div class="meaning" id="popup-meaning"></div>
+</div>
+</div>
+<script>
+const popup = document.getElementById('dict-popup');
+const popupWord = document.getElementById('popup-word');
+const popupPhonetic = document.getElementById('popup-phonetic');
+const popupMeaning = document.getElementById('popup-meaning');
+
+function hidePopup() {
+popup.style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+if (!popup.contains(e.target) && !e.target.classList.contains('word-clickable')) {
+hidePopup();
+}
+});
+
+document.querySelectorAll('.word-clickable').forEach(el => {
+el.addEventListener('click', function(e) {
+e.stopPropagation();
+const word = this.dataset.word.replace(/[^a-zA-Z-]/g, '');
+if (!word || word.length < 2) return;
+
+const rect = this.getBoundingClientRect();
+popup.style.display = 'block';
+popup.style.left = Math.min(rect.left, window.innerWidth - 380) + 'px';
+popup.style.top = (rect.bottom + 8) + 'px';
+popupWord.textContent = word;
+popupPhonetic.textContent = '';
+document.getElementById('popup-cn').textContent = '';
+popupMeaning.innerHTML = '<div class="loading">查询中...</div>';
+
+fetch('/api/lookup?word=' + encodeURIComponent(word))
+.then(r => r.json())
+.then(data => {
+popupWord.textContent = data.word || word;
+popupPhonetic.textContent = data.phonetic ? '/' + data.phonetic + '/' : '';
+document.getElementById('popup-cn').textContent = data.cn || '';
+
+if (data.meanings && data.meanings.length > 0) {
+let html = '';
+data.meanings.forEach(m => {
+html += '<div class="pos">' + m.pos + '</div>';
+m.defs.forEach(d => {
+html += '<div class="definition">• ' + d + '</div>';
+});
+});
+popupMeaning.innerHTML = html;
+} else {
+popupMeaning.innerHTML = '<div style="color:#999;">未找到释义</div>';
+}
+})
+.catch(() => {
+popupMeaning.innerHTML = '<div style="color:#999;">查询失败</div>';
+});
+});
+});
+
+document.addEventListener('keydown', function(e) {
+if (e.key === 'Escape') hidePopup();
+});
+</script>
+</body>
+</html>
